@@ -1,2 +1,1 @@
-# Токен необходимо задать при установке
-TOKEN = ''
+TOKEN = "5635438312:AAHVu-3ToFXfVK1JuNYvz1KvzjUwdI3jfYs"

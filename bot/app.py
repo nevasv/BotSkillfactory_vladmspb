@@ -26,7 +26,8 @@ val_list = {
 
 }
 
-task =[]
+task = []
+
 
 # Обрабатываются все сообщения, содержащие команды '/start' or '/help'.
 @bot.message_handler(commands=['start', 'help'])
@@ -43,12 +44,12 @@ def handle_start_help(message: telebot.types.Message):
 @bot.message_handler(commands=['currency'])
 def handle_start_help(message: telebot.types.Message):
     text = 'Доступные валюты \n' \
-           ' 1.Рубль  \n' \
-           ' 2. Доллар США {}\n' \
-           ' 3. Евро \n' \
-           ' 4. Китайский юань \n' \
-           ' 5. Беларусский рубль \n' \
-           ' 6. Японская йена'
+           f' 1. Рубль              \n' \
+           f' 2. Доллар США              : {USD_V / USD_R}\n' \
+           f' 3. Евро                             : {EUR_V / EUR_R}\n' \
+           f' 4. Китайский юань       : {CNY_V / CNY_R}\n' \
+           f' 5. Беларусский рубль : {BYN_V / BYN_R}\n' \
+           f' 6. Японская йена         : {JPY_V / JPY_R}'
     bot.reply_to(message, text)
 
 
@@ -56,20 +57,20 @@ def handle_start_help(message: telebot.types.Message):
 def convert_currency(message: telebot.types.Message):
     code1, code2, value = message.text.split(' ')
     global task
-    task = [code1, code2 , value]
+    task = [code1, code2, value]
     text = f"Конвертировать {value} {val_list[code1]} в {val_list[code2]} !! посчитать сечас? /calculate"
     bot.send_message(message.chat.id, text)
+
 
 @bot.message_handler(content_types=['calculate', ])
 def calculate_task(message: telebot.types.Message):
     return
 
 
-data_convert = '06.01.2023'
+data_convert = '07.01.2023'
 
 xml = etree.fromstring(
     requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={data_convert}").text.encode("1251"))
-
 
 JPY_V = float(xml.find('Valute[@ID="R01820"]/Value').text.strip("\"").replace(",", "."))
 JPY_R = int(xml.find('Valute[@ID="R01820"]/Nominal').text.strip("\"").replace(",", "."))
