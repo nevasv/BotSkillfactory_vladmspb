@@ -1,7 +1,8 @@
 # bot из задания 5.6 . Итоговый проект
 # -*- coding: utf-8 -*-
 import datetime
-
+import time
+import os
 from loguru import logger
 import requests
 import telebot
@@ -61,6 +62,7 @@ class CurrencyCalculate:
         self.data1_r = None
         self.data2_r = None
         self.data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
+        self.str_inf = None
 
     def input_task(self, action, ):
         pass
@@ -74,13 +76,26 @@ class CurrencyCalculate:
               '3': 'R01239',
               '4': 'R01375',
               '5': 'R01090B',
-              '6': 'R01375'}
+              '6': 'R01820'}
         keys = ID[X]
+        connection_timeout = 30  # seconds
+        start_time = time.time()
+        while True:
+            try:
+                self.str_inf = etree.fromstring(
+                    requests.get(
+                        f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={self.data_convert}").text.encode(
+                        "1251"))
+                break
+            except requests.ConnectionError:
+                if time.time() > start_time + connection_timeout:
+                    raise Exception(
+                        'Unable to get updates after {} seconds of ConnectionErrors'.format(connection_timeout))
+                else:
+                    time.sleep(1)  # attempting once every second
 
-        str_inf = etree.fromstring(
-            requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={self.data_convert}").text.encode("1251"))
-        data_v = float(str_inf.find(f"Valute[@ID='{keys}']/Value").text.strip("\"").replace(",", "."))
-        data_r = float(str_inf.find(f"Valute[@ID='{keys}']/Nominal").text.strip("\"").replace(",", "."))
+        data_v = float(self.str_inf.find(f"Valute[@ID='{keys}']/Value").text.strip("\"").replace(",", "."))
+        data_r = float(self.str_inf.find(f"Valute[@ID='{keys}']/Nominal").text.strip("\"").replace(",", "."))
 
         return data_v / data_r
 
@@ -105,7 +120,7 @@ def handle_start_help(message: telebot.types.Message):
            f' 3. Евро                             : {EUR_V / EUR_R}\n' \
            f' 4. Китайский юань       : {CNY_V / CNY_R}\n' \
            f' 5. Беларусский рубль : {BYN_V / BYN_R}\n' \
-           f' 6. Японская йена         : {JPY_V / JPY_R}'
+           f" 6. Японская йена         : {i_01.get_info_quote('6')}"
     bot.reply_to(message, text)
 
 
@@ -126,10 +141,10 @@ def convert_currency(message: telebot.types.Message):
     return float_lst
 
 
-data_convert = '07.01.2023'
+data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
 
 i_01 = CurrencyCalculate(2, 4, 200)
-test = i_01.get_info_quote('2')
+test = i_01.get_info_quote('6')
 print(test)
 
 xml = etree.fromstring(
