@@ -80,6 +80,7 @@ class CurrencyCalculate:
     def get_info_quote(self, X):
         """ Получение котировки валюты в рублях с сайта по введённому её номеру в списке"""
         ID = ['R01235', 'R01239', 'R01375', 'R01090B', 'R01820']
+        X = int(X)
         keys = ID[X - 2]
         connection_timeout = 30  # seconds
         start_time = time.time()
@@ -133,21 +134,23 @@ def convert_currency(message: telebot.types.Message):
     if len(user_input) != 3:
         logger.warning('Значений нужно ввести  три')
         raise MyException('Значений нужно ввести  три')
-
-    float_lst = [float(item) for item in user_input]
-    print(float_lst)
-
     code1, code2, value_cur = user_input
+    d1 = str(code1)
+    d2 = str(code2)
+    v = str(value_cur)
+    message.id = CurrencyCalculate(d1, d2, v)
+    rez = ("{:.2f}".format(message.id.get_result()))
 
-    text = f"Конвертировать {value_cur} {val_list[code1]} в {val_list[code2]} !! произвести расчет? /calc"
+    text = f"Конвертировать {value_cur} ({val_list[code1]}) в ({val_list[code2]}) !! расчет = {message.id.get_result():,.2f}({val_list[code2]})"
     bot.send_message(message.chat.id, text)
-    return float_lst
+
+    return
 
 
 data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
 
 i_01 = CurrencyCalculate('2', '1', '200')
-i_01.input_new_data_convert('15.12.2022')
+i_01.input_new_data_convert('17.12.2022')
 test = i_01.get_info_quote(2)
 test2 = i_01.get_result()
 print(test)
