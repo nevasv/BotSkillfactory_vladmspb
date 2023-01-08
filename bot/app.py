@@ -1,6 +1,6 @@
 # bot из задания 5.6 . Итоговый проект
 # -*- coding: utf-8 -*-
-from datetime import date
+import datetime
 
 from loguru import logger
 import requests
@@ -60,7 +60,7 @@ class CurrencyCalculate:
         self.data2_v = 1
         self.data1_r = None
         self.data2_r = None
-        self.data_convert = date
+        self.data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
 
     def input_task(self, action, ):
         pass
@@ -68,8 +68,9 @@ class CurrencyCalculate:
     def get_result(self):
         pass
 
-    def get_info(self, X):
-        ID = {'2': 'R01235',
+    def get_info_quote(self, X):
+        """ Получение котировки валюты в рублях с сайта по введённому её номеру в списке"""
+        ID = {'2': "R01235",
               '3': 'R01239',
               '4': 'R01375',
               '5': 'R01090B',
@@ -78,10 +79,10 @@ class CurrencyCalculate:
 
         str_inf = etree.fromstring(
             requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={self.data_convert}").text.encode("1251"))
-        data_v = float(str_inf.find(f'Valute[@ID="{keys}"]/Value').text.strip("\"").replace(",", "."))
-        data_r = float(str_inf.find(f'Valute[@ID="{keys}"]/Nominal').text.strip("\"").replace(",", "."))
+        data_v = float(str_inf.find(f"Valute[@ID='{keys}']/Value").text.strip("\"").replace(",", "."))
+        data_r = float(str_inf.find(f"Valute[@ID='{keys}']/Nominal").text.strip("\"").replace(",", "."))
 
-        return data_v/data_r
+        return data_v / data_r
 
 
 # Обрабатываются все сообщения, содержащие команды '/start' or '/help'.
@@ -120,8 +121,6 @@ def convert_currency(message: telebot.types.Message):
 
     code1, code2, value_cur = user_input
 
-    ans = CurrencyCalculate()
-
     text = f"Конвертировать {value_cur} {val_list[code1]} в {val_list[code2]} !! произвести расчет? /calc"
     bot.send_message(message.chat.id, text)
     return float_lst
@@ -129,8 +128,9 @@ def convert_currency(message: telebot.types.Message):
 
 data_convert = '07.01.2023'
 
-i_01 = CurrencyCalculate
-
+i_01 = CurrencyCalculate(2, 4, 200)
+test = i_01.get_info_quote('2')
+print(test)
 
 xml = etree.fromstring(
     requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={data_convert}").text.encode("1251"))
