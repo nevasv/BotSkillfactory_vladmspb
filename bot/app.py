@@ -52,10 +52,10 @@ val_list = {
 class CurrencyCalculate:
     """ Преобразование даннвх и расчеты"""
 
-    def __init__(self, data1, data2, value_input: float, action='convert', *args):
-        self.data1 = data1
-        self.data2 = data2
-        self.value_input = value_input
+    def __init__(self, data1: str, data2: str, value_input: str, action='convert', *args):
+        self.data1 = int(data1)
+        self.data2 = int(data2)
+        self.value_input = float(value_input)
         self.action = action
         self.data1_v = None
         self.data2_v = 1
@@ -64,20 +64,23 @@ class CurrencyCalculate:
         self.data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
         self.str_inf = None
 
-    def input_task(self, action, ):
+    def input_task(self, ):
         pass
 
+    def input_new_data_convert(self, d_new: str):
+        self.data_convert = d_new
+
     def get_result(self):
-        pass
+        if 2 < self.data2 < 6:
+            a = self.get_info_quote(self.data1) * self.value_input / self.get_info_quote(self.data2)
+        else:
+            a = self.get_info_quote(self.data1) * self.value_input
+        return a
 
     def get_info_quote(self, X):
         """ Получение котировки валюты в рублях с сайта по введённому её номеру в списке"""
-        ID = {'2': "R01235",
-              '3': 'R01239',
-              '4': 'R01375',
-              '5': 'R01090B',
-              '6': 'R01820'}
-        keys = ID[X]
+        ID = ['R01235', 'R01239', 'R01375', 'R01090B', 'R01820']
+        keys = ID[X - 2]
         connection_timeout = 30  # seconds
         start_time = time.time()
         while True:
@@ -115,12 +118,12 @@ def handle_start_help(message: telebot.types.Message):
 @bot.message_handler(commands=['currency'])
 def handle_start_help(message: telebot.types.Message):
     text = 'Доступные валюты \n' \
-           f' 1. Рубль              \n' \
-           f' 2. Доллар США              : {USD_V / USD_R}\n' \
-           f' 3. Евро                             : {EUR_V / EUR_R}\n' \
-           f' 4. Китайский юань       : {CNY_V / CNY_R}\n' \
-           f' 5. Беларусский рубль : {BYN_V / BYN_R}\n' \
-           f" 6. Японская йена         : {i_01.get_info_quote('6')}"
+           f" 1. Рубль              \n" \
+           f" 2. Доллар США              : {i_01.get_info_quote('2')}    на {i_01.data_convert}\n" \
+           f" 3. Евро                             : {i_01.get_info_quote('3')}  на {i_01.data_convert}\n" \
+           f" 4. Китайский юань       : {i_01.get_info_quote('4')}  на {i_01.data_convert}\n" \
+           f" 5. Беларусский рубль : {i_01.get_info_quote('5')}   на {i_01.data_convert}\n" \
+           f" 6. Японская йена         : {i_01.get_info_quote('6')} на {i_01.data_convert}"
     bot.reply_to(message, text)
 
 
@@ -143,9 +146,12 @@ def convert_currency(message: telebot.types.Message):
 
 data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
 
-i_01 = CurrencyCalculate(2, 4, 200)
-test = i_01.get_info_quote('6')
+i_01 = CurrencyCalculate('2', '1', '200')
+i_01.input_new_data_convert('15.12.2022')
+test = i_01.get_info_quote(2)
+test2 = i_01.get_result()
 print(test)
+print(test2)
 
 xml = etree.fromstring(
     requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={data_convert}").text.encode("1251"))
