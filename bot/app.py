@@ -1,8 +1,9 @@
 # bot из задания 5.6 . Итоговый проект
 # -*- coding: utf-8 -*-
+import bot.db as bot
 import datetime
 import time
-import os
+import sqlite3 as sl
 from loguru import logger
 import requests
 import telebot
@@ -36,7 +37,7 @@ class MyException(ModuleException):
         return f"Ошибка: {self.msg}"
 
 
-bot = telebot.TeleBot(TOKEN)
+Bot_currency = telebot.TeleBot(TOKEN)
 
 val_list = {
     '1': 'руб',
@@ -105,18 +106,19 @@ class CurrencyCalculate:
 
 
 # Обрабатываются все сообщения, содержащие команды '/start' or '/help'.
-@bot.message_handler(commands=['start', 'help'])
+@Bot_currency.message_handler(commands=['start', 'help'])
 def handle_start_help(message: telebot.types.Message):
-    bot.send_message(message.chat.id, f"Привет тестировщик, {message.chat.username} \n"
-                                      f"Для начала узнайте номер валюты: список валют /currency \n"
-                                      f"Дальше нужно вводить через пробел  \n"
-                                      f"Шаг №1 <номер конвертируемой валюты> \n"
-                                      f"Шаг №2 <номер валюты результата> \n"
-                                      f"Шаг №3 <колличество конвертируемой валюты> \n")
+    Bot_currency.send_message(message.chat.id,
+                              f"Привет тестировщик,{message.from_user.first_name} ({message.from_user.username}) \n "
+                              f"Для начала узнайте номер валюты: список валют /currency \n"
+                              f"Дальше нужно вводить через пробел  \n"
+                              f"Шаг №1 <номер конвертируемой валюты> \n"
+                              f"Шаг №2 <номер валюты результата> \n"
+                              f"Шаг №3 <колличество конвертируемой валюты> \n")
 
 
 # Обрабатываются команда /currency.
-@bot.message_handler(commands=['currency'])
+@Bot_currency.message_handler(commands=['currency'])
 def handle_start_help(message: telebot.types.Message):
     text = 'Доступные валюты \n' \
            f" 1. Рубль              \n" \
@@ -125,10 +127,10 @@ def handle_start_help(message: telebot.types.Message):
            f" 4. Китайский юань       : {i_01.get_info_quote('4')}  на {i_01.data_convert}\n" \
            f" 5. Беларусский рубль : {i_01.get_info_quote('5')}   на {i_01.data_convert}\n" \
            f" 6. Японская йена         : {i_01.get_info_quote('6')} на {i_01.data_convert}"
-    bot.reply_to(message, text)
+    Bot_currency.reply_to(message, text)
 
 
-@bot.message_handler(content_types=['text', ])
+@Bot_currency.message_handler(content_types=['text', ])
 def convert_currency(message: telebot.types.Message):
     user_input = message.text.split(' ')
     if len(user_input) != 3:
@@ -142,10 +144,35 @@ def convert_currency(message: telebot.types.Message):
     rez = ("{:.2f}".format(message.id.get_result()))
 
     text = f"Конвертировать {value_cur} ({val_list[code1]}) в ({val_list[code2]}) !! расчет = {message.id.get_result():,.2f}({val_list[code2]})"
-    bot.send_message(message.chat.id, text)
+    Bot_currency.send_message(message.chat.id, text)
+    n = bot.DB('db.db')
+    if not n.user_exists(message.from_user.id):
+        n.add_user(message.from_user.id)
+        n.get_records(message.from_user.id, d1 + ' ' + d2 + ' ' + v)
 
     return
 
+#n = bot.DB('accountant.db')
+#n.add_user(481491792)
+#print(n.get_user_id(40))
+
+#print(n.get_records(9))
+#print(n.get_user_id(40))
+
+# def init_db():
+#     # Создание базы и таблицы
+#     with cursor() as connect:
+#         connect.execute("""
+#             CREATE TABLE IF NOT EXISTS users (
+#                 id      INTEGER  PRIMARY KEY,
+#                 user_id INTEGER  NOT NULL,
+#                 text    TEXT  NOT NULL,
+#                 data json
+#             );
+#         """)
+
+
+# init_db()
 
 data_convert = f"{datetime.datetime.now():%d.%m.%Y}"
 
@@ -177,4 +204,4 @@ logger.info(f'на {data_convert} : BYN {BYN_V / BYN_R}')
 logger.info(f'на {data_convert} : JPY {JPY_V / JPY_R}')
 
 # Запуск полинга
-bot.polling(none_stop=True)
+Bot_currency.polling(none_stop=True)
