@@ -1,5 +1,7 @@
 # bot из задания 5.6 . Итоговый проект
 # -*- coding: utf-8 -*-
+from datetime import date
+
 from loguru import logger
 import requests
 import telebot
@@ -7,11 +9,30 @@ from lxml import etree
 from bot.config import TOKEN
 
 logger.add("logs/logs.log", format="{time} {level} {message}", level='DEBUG', rotation="20 KB", compression="zip")
+
+
 # serialize=True and  "logs/logs.json"
 # logger.debug('Error')
 # logger.info('Information message')
 # logger.warning('Warning')
 # @logger.catch()
+class ModuleException(Exception):
+    """ Ошибки здесь - общий класс"""
+
+
+class MyException(ModuleException):
+    """ Мои исключения"""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.msg = args if args else None
+        # if args:
+        #     self.msg = args
+        # else:
+        #     self.msg = None
+
+    def __str__(self):
+        return f"Ошибка: {self.msg}"
 
 
 bot = telebot.TeleBot(TOKEN)
@@ -26,7 +47,41 @@ val_list = {
 
 }
 
-task = []
+
+class CurrencyCalculate:
+    """ Преобразование даннвх и расчеты"""
+
+    def __init__(self, data1, data2, value_input: float, action='convert', *args):
+        self.data1 = data1
+        self.data2 = data2
+        self.value_input = value_input
+        self.action = action
+        self.data1_v = None
+        self.data2_v = 1
+        self.data1_r = None
+        self.data2_r = None
+        self.data_convert = date
+
+    def input_task(self, action, ):
+        pass
+
+    def get_result(self):
+        pass
+
+    def get_info(self, X):
+        ID = {'2': 'R01235',
+              '3': 'R01239',
+              '4': 'R01375',
+              '5': 'R01090B',
+              '6': 'R01375'}
+        keys = ID[X]
+
+        str_inf = etree.fromstring(
+            requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={self.data_convert}").text.encode("1251"))
+        data_v = float(str_inf.find(f'Valute[@ID="{keys}"]/Value').text.strip("\"").replace(",", "."))
+        data_r = float(str_inf.find(f'Valute[@ID="{keys}"]/Nominal').text.strip("\"").replace(",", "."))
+
+        return data_v/data_r
 
 
 # Обрабатываются все сообщения, содержащие команды '/start' or '/help'.
@@ -55,19 +110,27 @@ def handle_start_help(message: telebot.types.Message):
 
 @bot.message_handler(content_types=['text', ])
 def convert_currency(message: telebot.types.Message):
-    code1, code2, value = message.text.split(' ')
-    global task
-    task = [code1, code2, value]
-    text = f"Конвертировать {value} {val_list[code1]} в {val_list[code2]} !! посчитать сечас? /calculate"
+    user_input = message.text.split(' ')
+    if len(user_input) != 3:
+        logger.warning('Значений нужно ввести  три')
+        raise MyException('Значений нужно ввести  три')
+
+    float_lst = [float(item) for item in user_input]
+    print(float_lst)
+
+    code1, code2, value_cur = user_input
+
+    ans = CurrencyCalculate()
+
+    text = f"Конвертировать {value_cur} {val_list[code1]} в {val_list[code2]} !! произвести расчет? /calc"
     bot.send_message(message.chat.id, text)
-
-
-@bot.message_handler(content_types=['calculate', ])
-def calculate_task(message: telebot.types.Message):
-    return
+    return float_lst
 
 
 data_convert = '07.01.2023'
+
+i_01 = CurrencyCalculate
+
 
 xml = etree.fromstring(
     requests.get(f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={data_convert}").text.encode("1251"))
